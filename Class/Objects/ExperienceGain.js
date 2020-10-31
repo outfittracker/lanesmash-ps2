@@ -23,7 +23,7 @@ class ExperienceGain extends BaseObject {
 
     /**
      *
-     * @return {null|number}
+     * @return {Number|Null}
      */
     getFaction(){
         switch(this.loadoutId) {

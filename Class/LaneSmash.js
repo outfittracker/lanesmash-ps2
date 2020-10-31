@@ -55,7 +55,7 @@ class LaneSmash {
     didReceiveClientPayload(connection,payload){
         if(payload){
             if(payload.subscribe){
-                this.registerLane(connection,payload.subscribe.facilities).then(() => {
+                this.registerLane(connection,payload.subscribe.facilities,payload.subscribe.startBases).then(() => {
                     return this.sendSuccess(connection);
                 });
             }
@@ -82,10 +82,11 @@ class LaneSmash {
      *
      * @param connection
      * @param facilityStack
+     * @param startBases
      * @return {Promise}
      */
-    registerLane(connection,facilityStack){
-        return this.lane.registerFacilityStack(connection,facilityStack)
+    registerLane(connection,facilityStack,startBases){
+        return this.lane.registerFacilityStack(connection,facilityStack,startBases)
     }
 
     /**
@@ -103,11 +104,12 @@ class LaneSmash {
      */
     didReceiveServerPayload(data){
         if(data instanceof Capture){
-            return this.lane.didSecure(data);
+            this.lane.didSecure(data);
         }
         else if(data instanceof ExperienceGain){
-            return this.lane.didContest(data)
+            this.lane.didContest(data)
         }
+        this.lane.printDebug();
         return false;
     }
 }

@@ -11,7 +11,7 @@
     <title>Title</title>
 </head>
 <body>
-<div id="debugger"></div>
+<pre id="debugger"></pre>
 <script type="text/javascript">
     const container = document.getElementById("debugger");
 
@@ -65,15 +65,30 @@
                  */
                 this.init = true; // bool
             }
+
+            describe(){
+                let str = "<hr>"+this.name+"\n";
+                str += "VS got "+this.controlledPoints["1"]+"/"+this.capturablePoints+" points\n";
+                str += "NC got "+this.controlledPoints["2"]+"/"+this.capturablePoints+" points\n";
+                str += "Attacking faction "+this.attackingFaction+", defending "+this.controllingFaction+"\n";
+                return str;
+            }
         }
 
         // peris amp, peris eastern,
+
         const facilityStack = [3400,3430,5700];
         const url = "ws://127.0.0.1:4568";
         const ws = new WebSocket(url+"/lanesmash");
         ws.onopen = () => {
             ws.send(JSON.stringify({
-                subscribe: {facilities: facilityStack}
+                subscribe: {
+                    facilities: facilityStack,
+                    startBases: {
+                        1: 3400,
+                        2: 5700
+                    }
+                }
             }));
         };
 
@@ -82,11 +97,12 @@
             if(payload && payload.type === 'LaneFacilityState'){
                 const state = new LaneFacilityState();
                 Object.assign(state,payload);
-                console.log(state)
+                container.innerHTML += state.describe();
             }
             else{
                 console.log(payload);
             }
+
         }
         ws.onclose = () => {
             console.log("ded game");

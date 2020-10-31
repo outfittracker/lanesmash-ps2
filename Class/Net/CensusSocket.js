@@ -61,6 +61,10 @@ class CensusSocket {
         });
     }
 
+    /**
+     *
+     * @return {*}
+     */
     stop(){
         console.log("Stopping SocketSubscriber");
         this.unsubscribeAll();

@@ -81,7 +81,7 @@ class SocketServer {
                     catch(err) {
                         console.log(message.utf8Data);
                         console.error(err);
-                        cn.send(JSON.stringify({error: 'Not JSON'}));
+                        cn.send(JSON.stringify({error: err}));
                     }
                 }
             });

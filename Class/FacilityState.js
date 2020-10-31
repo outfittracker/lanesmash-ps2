@@ -12,8 +12,9 @@ class FacilityState {
      *
      * @param facilityId
      * @param connection
+     * @param {Number[]}factionList
      */
-    constructor(facilityId,connection) {
+    constructor(facilityId,connection,factionList) {
 
         this.facilityId         = facilityId;
         this.connection         = connection;
@@ -22,10 +23,13 @@ class FacilityState {
         this.worldId            = 0;
         this.pointState         = {};
         this.name               = '';
+        this.factionList        = factionList
+        this.attackTimer        = null;
+        this.defenseTimer       = null;
 
-        this.pointState[Faction.NC] = 0;
-        this.pointState[Faction.TR] = 0;
-        this.pointState[Faction.VS] = 0;
+        this.factionList.forEach(f => {
+            this.pointState[String(f)] = 0;
+        })
     }
 
     /**
@@ -34,19 +38,20 @@ class FacilityState {
      */
     resolveCurrentState(){
         return HTTPRequest.request(process.env.OUTFIT_TRACKER_API+'services/facility/control?facilityId='+this.facilityId+'&serverId='+process.env.WORLD_ID).then(payload => {
-            this.controllingFaction                     = parseInt(payload.data.faction)
+            this.controllingFaction                     = parseInt(payload.data.faction) > 0 ? parseInt(payload.data.faction) : null
             this.numberOfPoints                         = parseInt(payload.data.numberOfPoints);
             this.worldId                                = parseInt(payload.data.worldId);
             this.name                                   = payload.data.name;
 
             if(this.controllingFaction > 0){
-                this.pointState[this.controllingFaction] = this.numberOfPoints;
+                this.pointState[String(this.controllingFaction)] = this.numberOfPoints;
             }
 
-            console.log("LANE | State resolved for "+this.facilityId+" on "+this.worldId);
+            console.log(this.name+" ("+Faction.name(this.controllingFaction)+") resolved");
             this.sendUpdate(true);
         }).catch(err => {
             console.log("LANE | State resolve FAILED "+err);
+            console.error(err);
         });
     }
 
@@ -70,9 +75,17 @@ class FacilityState {
             init:                   init
         };
         const json = JSON.stringify(payload);
-        console.log("LANE | Sending payload "+json);
         this.connection.send(json);
         return true;
+    }
+
+    /**
+     *
+     * @param faction
+     * @return {boolean}
+     */
+    isFactionValid(faction){
+        return faction === 0 || this.factionList.indexOf(faction) >= 0;
     }
 
     /**
@@ -82,9 +95,9 @@ class FacilityState {
     factionTimerProgress(){
         if(!this.isFullySecured()){
 
-            const trPoint = this.pointState[Faction.TR];
-            const ncPoint = this.pointState[Faction.NC];
-            const vsPoint = this.pointState[Faction.VS];
+            const trPoint = this.isFactionValid(Faction.TR) ? this.pointState[String(Faction.TR)] : 0;
+            const ncPoint = this.isFactionValid(Faction.NC) ? this.pointState[String(Faction.NC)] : 0;
+            const vsPoint = this.isFactionValid(Faction.VS) ? this.pointState[String(Faction.VS)] : 0;
 
             if(trPoint > ncPoint && trPoint > vsPoint){
                 return Faction.TR;
@@ -98,6 +111,7 @@ class FacilityState {
         }
         return null;
     }
+
 
     /**
      *
@@ -113,11 +127,25 @@ class FacilityState {
 
         stack.forEach(opFaction => {
             const f = parseInt(opFaction);
-            const currentPoint = this.pointState[f];
+            const currentPoint = this.pointState[opFaction];
             if(currentPoint > 0){
                 this.didUntagPoint(f)
             }
         })
+
+
+        const factionTag = this.factionTimerProgress();
+        if(factionTag){
+            if(factionTag === this.controllingFaction){
+                this.defenseTimer = factionTag;
+                this.attackTimer = null;
+            }
+            else{
+                this.defenseTimer = null;
+                this.attackTimer = factionTag;
+            }
+        }
+
 
         this.sendUpdate();
         return true;
@@ -128,7 +156,9 @@ class FacilityState {
      * @param {Number} faction
      */
     didTagPoint(faction){
-        this.pointState[faction] = Math.min(this.pointState[faction]+1,this.numberOfPoints);
+
+        this.pointState[String(faction)] = Math.min(this.pointState[faction]+1,this.numberOfPoints);
+        console.log(this.name+" ("+Faction.name(faction)+") did tag a point "+this.pointState[String(faction)]+"/"+this.numberOfPoints);
     }
 
     /**
@@ -136,7 +166,7 @@ class FacilityState {
      * @param {Number} faction
      */
     didUntagPoint(faction){
-        this.pointState[faction] = Math.max(this.pointState[faction]-1,0);
+        this.pointState[String(faction)] = Math.max(this.pointState[faction]-1,0);
     }
 
     /**
@@ -144,7 +174,7 @@ class FacilityState {
      * @return {boolean}
      */
     isFullySecured(){
-        return !this.isContestableBy(this.controllingFaction);
+        return this.controllingFaction !== null ? !this.hasPointToCap(this.controllingFaction) : false;
     }
 
     /**
@@ -152,37 +182,57 @@ class FacilityState {
      * @param {Number} faction
      * @return {boolean}
      */
-    isContestableBy(faction){
-        return this.pointState[faction] < this.numberOfPoints;
+    hasPointToCap(faction){
+        console.log(this.name+" ("+Faction.name(faction)+') got '+this.pointState[String(faction)]+"/"+this.numberOfPoints+" points");
+        return this.pointState[String(faction)] < this.numberOfPoints;
     }
 
     /**
      *
-     * @param {Number} faction
+     * @param {Number|Null} faction
+     * @param isDefense
      * @return {boolean}
      */
-    didSecure(faction){
+    didSecure(faction,isDefense = false){
         this.controllingFaction = faction;
-        this.pointState[faction] = this.numberOfPoints;
-        switch(faction){
-
-            case Faction.NC:
-                this.pointState[Faction.TR] = 0;
-                this.pointState[Faction.VS] = 0;
-                break;
-
-            case Faction.TR:
-                this.pointState[Faction.NC] = 0;
-                this.pointState[Faction.VS] = 0;
-                break;
-
-            case Faction.VS:
-                this.pointState[Faction.NC] = 0;
-                this.pointState[Faction.TR] = 0;
-                break;
+        if(faction !== null){
+            this.pointState[String(faction)] = this.numberOfPoints;
         }
-
+        this.factionList.filter(f => f !== faction).forEach(fc => {
+            this.pointState[String(fc)] = 0;
+        })
+        this.attackTimer = null;
+        this.defenseTimer = null;
         return this.sendUpdate();
+    }
+
+    /**
+     *
+     * @param {FacilityState[]} stack
+     * @return {FacilityState|null}
+     */
+    getPreviousBase(stack){
+        const index = stack.indexOf(this);
+        return index > 0 ? stack[index-1] : null;
+    }
+
+    /**
+     *
+     * @param {FacilityState[]} stack
+     * @return {FacilityState|null}
+     */
+    getNextBase(stack){
+        const index = stack.indexOf(this);
+        return index < stack.length-2 ? stack[index+1] : null;
+    }
+
+    /**
+     *
+     * @param {Number} faction
+     * @return {boolean}
+     */
+    isControllerBy(faction){
+        return this.controllingFaction === faction;
     }
 
 }

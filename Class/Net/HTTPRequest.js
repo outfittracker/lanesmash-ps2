@@ -3,8 +3,6 @@
  * Twitter : @aurelien_munoz
  * LaneSmash Script for PS2 10/2020
  */
-'use strict';
-
 const Requestify = require('requestify');
 const JSONStream = require('json-stream');
 
@@ -18,12 +16,10 @@ class HTTPRequest {
     static request(url){
         console.log("Call "+url);
         return new Promise((resolve,reject) => {
-
             return Requestify.get(url).then(response => {
                 const stream = JSONStream();
                 stream.on('data',resolve);
                 return stream.write(response.body);
-
             }).catch(err => {
                 reject(err);
             });
@@ -34,7 +30,7 @@ class HTTPRequest {
      *
      * @param url
      * @param data
-     * @returns {Promise<unknown>}
+     * @returns {Promise}
      */
     static post(url,data){
         return new Promise((resolve,reject) => {

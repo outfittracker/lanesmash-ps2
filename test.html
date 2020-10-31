@@ -69,7 +69,7 @@
 
         // peris amp, peris eastern,
         const facilityStack = [3400,3430,5700];
-        const url = "ws://192.168.1.15:4568";
+        const url = "ws://127.0.0.1:4568";
         const ws = new WebSocket(url+"/lanesmash");
         ws.onopen = () => {
             ws.send(JSON.stringify({

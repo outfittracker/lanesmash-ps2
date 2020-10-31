@@ -1,3 +1,9 @@
+/*
+ * Aurelien Munoz <munoz.aurelien@gmail.com>
+ * Twitter : @aurelien_munoz
+ * LaneSmash Script for PS2 10/2020
+ */
+
 const SocketClient          = require('../Net/SocketClient');
 const schedule              = require('node-schedule');
 const ExperienceGain        = require("../Objects/ExperienceGain");
@@ -10,18 +16,18 @@ class CensusSocket {
     /**
      *
      */
-    constructor(dataCallback) {
+    constructor() {
         this.env = process.env.PS2_ENV;
         this.client = null;
         this.eventCount = 0;
-        this.dataCallback = dataCallback;
+        this.dataCallback = null;
     }
     /**
      *
      * @returns {Promise}
      */
-    start(){
-
+    start(dataCallback){
+        this.dataCallback = dataCallback;
         return new Promise(resolve => {
 
             if(this.client){
@@ -36,7 +42,7 @@ class CensusSocket {
                 setTimeout(() => { // si pas de traffic au bout de 5s on reboot
                     schedule.scheduleJob('*/20 * * * * *',() => {
                         if(!this.eventReceived()){
-                            return this.start();
+                            return this.start(dataCallback);
                         }
                     });
                 },10000);
@@ -84,7 +90,7 @@ class CensusSocket {
                     "service":      "event",
                     "action":       "subscribe",
                     "characters":   ["all"],
-                    "worlds":       [process.env.WORLD_ID],
+                    "worlds":       [String(process.env.WORLD_ID)],
                     "eventNames":   CensusSocket.getEventListenedIds()
                 });
                 CensusSocket.ready = true;
@@ -123,15 +129,22 @@ class CensusSocket {
      */
     incomingMessage(json){
         const payload = json.payload;
+        const worldId = parseInt(process.env.WORLD_ID);
         this.eventCount++;
         if(payload && payload.event_name){
             switch(payload.event_name) {
                 case CensusSocket.EVENT_FACILITY_CONTROL:
                     if(parseInt(payload.zone_id) > 1000){ // filter weird data received from socket
-                        return;
+                        return false;
+                    }
+                    if(parseInt(payload.world_id) !== worldId){
+                        return false;
                     }
                     return this.dataCallback(new Capture(payload));
                 case CensusSocket.EVENT_GAIN_EXPERIENCE:
+                    if(parseInt(payload.world_id) !== worldId){
+                        return false;
+                    }
                     return this.dataCallback(new ExperienceGain(payload));
             }
         }

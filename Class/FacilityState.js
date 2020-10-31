@@ -1,3 +1,9 @@
+/*
+ * Aurelien Munoz <munoz.aurelien@gmail.com>
+ * Twitter : @aurelien_munoz
+ * LaneSmash Script for PS2 10/2020
+ */
+
 const Faction = require("./Faction");
 const HTTPRequest = require("./Net/HTTPRequest");
 
@@ -14,7 +20,7 @@ class FacilityState {
         this.controllingFaction = null;
         this.numberOfPoints     = 0;
         this.worldId            = 0;
-        this.pointState         = [];
+        this.pointState         = {};
         this.name               = '';
 
         this.pointState[Faction.NC] = 0;
@@ -27,11 +33,16 @@ class FacilityState {
      * @return {Promise}
      */
     resolveCurrentState(){
-        return HTTPRequest.request(process.env.OUTFIT_TRACKER_API+'services/facility/control?facilityId='+this.facilityId+'&serverId='+this.worldId).then(payload => {
+        return HTTPRequest.request(process.env.OUTFIT_TRACKER_API+'services/facility/control?facilityId='+this.facilityId+'&serverId='+process.env.WORLD_ID).then(payload => {
             this.controllingFaction                     = parseInt(payload.data.faction)
             this.numberOfPoints                         = parseInt(payload.data.numberOfPoints);
+            this.worldId                                = parseInt(payload.data.worldId);
             this.name                                   = payload.data.name;
-            this.pointState[this.controllingFaction]    = this.numberOfPoints;
+
+            if(this.controllingFaction > 0){
+                this.pointState[this.controllingFaction] = this.numberOfPoints;
+            }
+
             console.log("LANE | State resolved for "+this.facilityId+" on "+this.worldId);
             this.sendUpdate(true);
         }).catch(err => {
@@ -94,9 +105,38 @@ class FacilityState {
      * @return {boolean}
      */
     didContest(faction){
-        this.pointState[faction] = Math.min(this.pointState[faction]+1,this.numberOfPoints);
+
+        this.didTagPoint(faction);
+        const stack = Object.keys(this.pointState).filter(
+            k => parseInt(k) !== faction
+        );
+
+        stack.forEach(opFaction => {
+            const f = parseInt(opFaction);
+            const currentPoint = this.pointState[f];
+            if(currentPoint > 0){
+                this.didUntagPoint(f)
+            }
+        })
+
         this.sendUpdate();
         return true;
+    }
+
+    /**
+     *
+     * @param {Number} faction
+     */
+    didTagPoint(faction){
+        this.pointState[faction] = Math.min(this.pointState[faction]+1,this.numberOfPoints);
+    }
+
+    /**
+     *
+     * @param {Number} faction
+     */
+    didUntagPoint(faction){
+        this.pointState[faction] = Math.max(this.pointState[faction]-1,0);
     }
 
     /**

@@ -1,9 +1,7 @@
 /*
- *
- *     Aurelien Munoz <aurelien@boreal-business.net>
- *     Twitter : @aurelien_munoz
- *     Copyright 2017
- *
+ * Aurelien Munoz <munoz.aurelien@gmail.com>
+ * Twitter : @aurelien_munoz
+ * LaneSmash Script for PS2 10/2020
  */
 
 /**
@@ -39,11 +37,7 @@ class SocketClient {
      * @returns {String}
      */
     getEndPoint(){
-        switch(this.env){
-            case 'ps2:v2':       return 'wss://push.planetside2.com/streaming?environment=ps2&service-id=s:auraxisnetwork';
-            case 'ps2ps4eu:v2':  return 'wss://push.planetside2.com/streaming?environment=ps2ps4eu&service-id=s:auraxisnetwork';
-            case 'ps2ps4us:v2':  return 'wss://push.planetside2.com/streaming?environment=ps2ps4us&service-id=s:auraxisnetwork';
-        }
+        return 'wss://push.planetside2.com/streaming?environment='+this.env+'&service-id='+process.env.CENSUS_API_ID;
     }
 
     /**
@@ -52,7 +46,7 @@ class SocketClient {
      */
     connect(){
 
-        console.log("Connecting WSClient to daybreak server ...");
+        console.log("Connecting WSClient to Rogue Planet server ...");
         this.startScheduler();
 
         if(this.client){

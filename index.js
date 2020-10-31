@@ -1,6 +1,16 @@
+/*
+ * Aurelien Munoz <munoz.aurelien@gmail.com>
+ * Twitter : @aurelien_munoz
+ * LaneSmash Script for PS2 10/2020
+ */
+
 'use strict';
 const LaneSmash = require("./Class/LaneSmash");
+const dotenv = require('dotenv');
+dotenv.config();
+
 const ls = new LaneSmash();
+
 
 process.stdin.resume();
 process.on('SIGINT',function(){

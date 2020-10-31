@@ -1,3 +1,9 @@
+/*
+ * Aurelien Munoz <munoz.aurelien@gmail.com>
+ * Twitter : @aurelien_munoz
+ * LaneSmash Script for PS2 10/2020
+ */
+
 const ws      = require('websocket').server;
 const http    = require('http');
 const https   = require('https');
@@ -96,7 +102,7 @@ class SocketServer {
     }
 
     static stop(){
-        return SocketServer.serverEndpoint ? SocketServer.serverEndpoint.closeAllConnections() : true;
+        return SocketServer.socketEndpoint ? SocketServer.socketEndpoint.closeAllConnections() : true;
     }
 
 

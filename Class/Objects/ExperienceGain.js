@@ -1,3 +1,9 @@
+/*
+ * Aurelien Munoz <munoz.aurelien@gmail.com>
+ * Twitter : @aurelien_munoz
+ * LaneSmash Script for PS2 10/2020
+ */
+
 const Faction = require("../Faction");
 const BaseObject = require("./BaseObject");
 

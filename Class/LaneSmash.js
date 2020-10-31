@@ -1,3 +1,9 @@
+/*
+ * Aurelien Munoz <munoz.aurelien@gmail.com>
+ * Twitter : @aurelien_munoz
+ * LaneSmash Script for PS2 10/2020
+ */
+
 const SocketServer = require("./Net/SocketServer");
 const CensusSocket = require("./Net/CensusSocket");
 const FacilityLane = require("./FacilityLane");
@@ -49,7 +55,7 @@ class LaneSmash {
     didReceiveClientPayload(connection,payload){
         if(payload){
             if(payload.subscribe){
-                this.registerLane(connection,payload.subscribe.facilityId).then(() => {
+                this.registerLane(connection,payload.subscribe.facilities).then(() => {
                     return this.sendSuccess(connection);
                 });
             }

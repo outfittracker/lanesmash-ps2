@@ -1,0 +1,100 @@
+<!--
+  ~ Aurelien Munoz <munoz.aurelien@gmail.com>
+  ~ Twitter : @aurelien_munoz
+  ~ LaneSmash Script for PS2 10/2020
+  -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div id="debugger"></div>
+<script type="text/javascript">
+    const container = document.getElementById("debugger");
+
+    window.addEventListener("load",() => {
+
+
+        class LaneFacilityState {
+            constructor() {
+                /**
+                 * @var {String}
+                 */
+                this.type = '';
+                /**
+                 * @var {Number}
+                 */
+                this.worldId = 0;
+                /**
+                 * @var {Number}
+                 */
+                this.facilityId = 0;
+                /**
+                 * @var {Boolean}
+                 */
+                this.running = false;
+                /**
+                 * @var {Number|Null}
+                 */
+                this.controllingFaction = null;
+                /**
+                 * @var {Number|Null}
+                 */
+                this.attackingFaction = null;
+                /**
+                 * @var {Number|Null}
+                 */
+                this.capturablePoints = 0;
+                /**
+                 * @var {String}
+                 */
+                this.name = ''; // string
+                /**
+                 * @var {*}
+                 */
+                this.controlledPoints = {
+                    "1": 0, // VS
+                    "2": 0, // NC
+                    "3": 0 // TR
+                };
+                /**
+                 * @var {Boolean}
+                 */
+                this.init = true; // bool
+            }
+        }
+
+        // peris amp, peris eastern,
+        const facilityStack = [3400,3430,5700];
+        const url = "ws://192.168.1.15:4568";
+        const ws = new WebSocket(url+"/lanesmash");
+        ws.onopen = () => {
+            ws.send(JSON.stringify({
+                subscribe: {facilities: facilityStack}
+            }));
+        };
+
+        ws.onmessage = (message) => {
+            const payload = JSON.parse(message.data);
+            if(payload && payload.type === 'LaneFacilityState'){
+                const state = new LaneFacilityState();
+                Object.assign(state,payload);
+                console.log(state)
+            }
+            else{
+                console.log(payload);
+            }
+        }
+        ws.onclose = () => {
+            console.log("ded game");
+        }
+
+    });
+
+</script>
+
+</body>
+</html>

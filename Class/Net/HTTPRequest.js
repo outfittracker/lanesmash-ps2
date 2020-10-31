@@ -1,9 +1,7 @@
 /*
- *
- *     Aurelien Munoz <aurelien@boreal-business.net>
- *     Twitter : @aurelien_munoz
- *     Copyright 2017
- *
+ * Aurelien Munoz <munoz.aurelien@gmail.com>
+ * Twitter : @aurelien_munoz
+ * LaneSmash Script for PS2 10/2020
  */
 'use strict';
 
@@ -18,6 +16,7 @@ class HTTPRequest {
      * @returns {Promise<Object>}
      */
     static request(url){
+        console.log("Call "+url);
         return new Promise((resolve,reject) => {
 
             return Requestify.get(url).then(response => {

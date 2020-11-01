@@ -210,25 +210,46 @@ class FacilityLane {
      *
      */
     printDebug(){
-        const data = this.facilities.map(f => {
+        /*
+         table.setData([
+    [ 'Animals',  'Foods'  ],
+    [ 'Elephant', 'Apple'  ],
+    [ 'Bird',     'Orange' ]
+  ]);
+         */
+
+        let header = [
+            "Base","Owner","A Timer","D Timer","Secured","Points"
+        ];
+
+        this.factionList.forEach(fx => {
+            header.push(Faction.name(fx));
+            header.push("Contestable by "+Faction.name(fx));
+        });
+
+
+        let data = [header];
+
+        this.facilities.forEach(f => {
             const defTimer = f.defenseTimer;
             const atkTimer = f.attackTimer;
-            const lt = {
-                "Base":         f.name,
-                "Owner":        Faction.name(f.controllingFaction),
-                "A Timer":      atkTimer ? Faction.name(atkTimer) : false,
-                "D Timer":      defTimer ? Faction.name(defTimer) : false,
-                "Secured":      f.areAllPointsSecured(f.controllingFaction),
-                "Points":       f.numberOfPoints,
-            }
+            let lt = [
+               f.name,
+               Faction.name(f.controllingFaction),
+               atkTimer ? Faction.name(atkTimer) : "false",
+               defTimer ? Faction.name(defTimer) : "false",
+               f.areAllPointsSecured(f.controllingFaction) ? "true" : "false",
+               String(f.numberOfPoints),
+           ];
             this.factionList.forEach(fx => {
-                lt[Faction.name(fx)] = f.pointState[String(fx)];
-                lt["Contestable by "+Faction.name(fx)] = this.hasPointAvailableForCapture(f,fx);
+                lt.push(String(f.pointState[String(fx)]));
+                lt.push(this.hasPointAvailableForCapture(f,fx) ? "true" : "false");
             })
-            return lt;
+
+            data.push(lt);
         })
 
-        console.table(data)
+        ScreenLog.update(data);
     }
 
 }

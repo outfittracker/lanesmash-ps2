@@ -16,16 +16,19 @@ class ScreenLog {
         ScreenLog.screen.title = 'LaneScript';
         ScreenLog.table = blessed.table({
             top: '0%',
-            left: 'center',
             width: '100%',
             height: '50%',
             border: {
                 type: 'line'
             },
+            style: {
+                header: {
+                    inverse: true
+                }
+            }
         });
         ScreenLog.text = blessed.textarea({
-            top: '0%',
-            left: 'center',
+            top: '50%',
             width: '100%',
             height: '50%',
             border: {
@@ -37,13 +40,15 @@ class ScreenLog {
             return process.exit(0);
         });
 
-        //ScreenLog.screen.append(ScreenLog.table)
         ScreenLog.screen.append(ScreenLog.text)
+        ScreenLog.screen.append(ScreenLog.table)
+
         ScreenLog.table.focus();
         ScreenLog.screen.render();
     }
 
     static update(data){
+        ScreenLog.table.setData(data);
         ScreenLog.screen.render();
     }
 

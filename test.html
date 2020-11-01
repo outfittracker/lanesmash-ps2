@@ -25,10 +25,12 @@
                  */
                 this.type = '';
                 /**
+                 * Server id
                  * @var {Number}
                  */
                 this.worldId = 0;
                 /**
+                 *
                  * @var {Number}
                  */
                 this.facilityId = 0;
@@ -45,22 +47,26 @@
                  */
                 this.attackingFaction = null;
                 /**
+                 * Total points on the facility
                  * @var {Number|Null}
                  */
                 this.capturablePoints = 0;
                 /**
+                 * Facility name
                  * @var {String}
                  */
-                this.name = ''; // string
+                this.name = '';
                 /**
+                 * Summary of points controlled
                  * @var {*}
                  */
                 this.controlledPoints = {
                     "1": 0, // VS
                     "2": 0, // NC
-                    "3": 0 // TR
+                    "3": 0  // TR
                 };
                 /**
+                 * Initial/setup payload
                  * @var {Boolean}
                  */
                 this.init = true; // bool
@@ -69,7 +75,7 @@
             describe(){
                 let str = "<hr>"+this.name+"\n";
                 str += "VS got "+this.controlledPoints["1"]+"/"+this.capturablePoints+" points\n";
-                str += "NC got "+this.controlledPoints["2"]+"/"+this.capturablePoints+" points\n";
+                str += "TR got "+this.controlledPoints["3"]+"/"+this.capturablePoints+" points\n";
                 str += "Attacking faction "+this.attackingFaction+", defending "+this.controllingFaction+"\n";
                 return str;
             }
@@ -92,9 +98,9 @@
             ws.send(JSON.stringify({
                 subscribe: {
                     facilities: facilityStack,
-                    continent: 6,
+                    continent: 6, // Continent id
                     startBases: {
-                        3: 206000,
+                        3: 206000, // FactionId: Facility id
                         1: 211000
                     }
                 }

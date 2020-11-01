@@ -6,6 +6,7 @@
 
 const Faction = require("./Faction");
 const HTTPRequest = require("./Net/HTTPRequest");
+const ScreenLog = require("./ScreenLog");
 
 class FacilityState {
     /**
@@ -29,7 +30,7 @@ class FacilityState {
 
         this.factionList.forEach(f => {
             this.pointState[String(f)] = 0;
-        })
+        });
     }
 
     /**
@@ -38,7 +39,7 @@ class FacilityState {
      */
     resolveCurrentState(){
         return HTTPRequest.request(process.env.OUTFIT_TRACKER_API+'services/facility/control?facilityId='+this.facilityId+'&serverId='+process.env.WORLD_ID).then(payload => {
-            this.controllingFaction                     = parseInt(payload.data.faction) > 0 ? parseInt(payload.data.faction) : null
+            this.controllingFaction                     = parseInt(payload.data.faction) < 4 ? parseInt(payload.data.faction) : null
             this.numberOfPoints                         = parseInt(payload.data.numberOfPoints);
             this.worldId                                = parseInt(payload.data.worldId);
             this.name                                   = payload.data.name;
@@ -47,10 +48,10 @@ class FacilityState {
                 this.pointState[String(this.controllingFaction)] = this.numberOfPoints;
             }
 
-            console.log(this.name+" ("+Faction.name(this.controllingFaction)+") resolved");
+           // console.log(this.name+" ("+Faction.name(this.controllingFaction)+") resolved");
             this.sendUpdate(true);
         }).catch(err => {
-            console.log("LANE | State resolve FAILED "+err);
+            ScreenLog.log("LANE | State resolve FAILED "+err);
             console.error(err);
         });
     }
@@ -85,7 +86,7 @@ class FacilityState {
      * @return {boolean}
      */
     isFactionValid(faction){
-        return faction === 0 || this.factionList.indexOf(faction) >= 0;
+        return faction === null || this.factionList.indexOf(faction) >= 0;
     }
 
     /**
@@ -93,7 +94,7 @@ class FacilityState {
      * @return {Number|null}
      */
     factionTimerProgress(){
-        if(!this.isFullySecured()){
+        if(!this.areAllPointsSecured(this.controllingFaction)){
 
             const trPoint = this.isFactionValid(Faction.TR) ? this.pointState[String(Faction.TR)] : 0;
             const ncPoint = this.isFactionValid(Faction.NC) ? this.pointState[String(Faction.NC)] : 0;
@@ -111,7 +112,6 @@ class FacilityState {
         }
         return null;
     }
-
 
     /**
      *
@@ -131,8 +131,7 @@ class FacilityState {
             if(currentPoint > 0){
                 this.didUntagPoint(f)
             }
-        })
-
+        });
 
         const factionTag = this.factionTimerProgress();
         if(factionTag){
@@ -158,7 +157,7 @@ class FacilityState {
     didTagPoint(faction){
 
         this.pointState[String(faction)] = Math.min(this.pointState[faction]+1,this.numberOfPoints);
-        console.log(this.name+" ("+Faction.name(faction)+") did tag a point "+this.pointState[String(faction)]+"/"+this.numberOfPoints);
+        //console.log(this.name+" ("+Faction.name(faction)+") did tag a point "+this.pointState[String(faction)]+"/"+this.numberOfPoints);
     }
 
     /**
@@ -173,8 +172,8 @@ class FacilityState {
      *
      * @return {boolean}
      */
-    isFullySecured(){
-        return this.controllingFaction !== null ? !this.hasPointToCap(this.controllingFaction) : false;
+    areAllPointsSecured(byFaction){
+        return this.pointState[String(byFaction)] === this.numberOfPoints;
     }
 
     /**
@@ -183,8 +182,8 @@ class FacilityState {
      * @return {boolean}
      */
     hasPointToCap(faction){
-        console.log(this.name+" ("+Faction.name(faction)+') got '+this.pointState[String(faction)]+"/"+this.numberOfPoints+" points");
-        return this.pointState[String(faction)] < this.numberOfPoints;
+        //console.log(this.name+" ("+Faction.name(faction)+') got '+this.pointState[String(faction)]+"/"+this.numberOfPoints+" points");
+        return !this.areAllPointsSecured(faction);
     }
 
     /**

@@ -9,6 +9,7 @@ const CensusSocket = require("./Net/CensusSocket");
 const FacilityLane = require("./FacilityLane");
 const Capture = require("./Objects/Capture");
 const ExperienceGain = require("./Objects/ExperienceGain");
+const ScreenLog = require("./ScreenLog");
 
 class LaneSmash {
 
@@ -31,7 +32,7 @@ class LaneSmash {
         }).then(() => {
             SocketServer.start((connection,endpoint,json) => {
                 if(endpoint === 'lanesmash'){
-                    console.log('Facility API message');
+                    //console.log('Facility API message');
                     this.didReceiveClientPayload(connection,json);
                 }
             },(connection,endpoint) => {
@@ -55,7 +56,7 @@ class LaneSmash {
     didReceiveClientPayload(connection,payload){
         if(payload){
             if(payload.subscribe){
-                this.registerLane(connection,payload.subscribe.facilities,payload.subscribe.startBases).then(() => {
+                this.registerLane(connection,payload.subscribe.facilities,payload.subscribe.startBases,parseInt(payload.subscribe.continent)).then(() => {
                     return this.sendSuccess(connection);
                 });
             }
@@ -83,10 +84,11 @@ class LaneSmash {
      * @param connection
      * @param facilityStack
      * @param startBases
+     * @param {Number} continentId
      * @return {Promise}
      */
-    registerLane(connection,facilityStack,startBases){
-        return this.lane.registerFacilityStack(connection,facilityStack,startBases)
+    registerLane(connection,facilityStack,startBases,continentId){
+        return this.lane.registerFacilityStack(connection,facilityStack,startBases,continentId)
     }
 
     /**
@@ -103,6 +105,8 @@ class LaneSmash {
      * @return {Boolean}
      */
     didReceiveServerPayload(data){
+
+        ScreenLog.log(data);
         if(data instanceof Capture){
             this.lane.didSecure(data);
         }

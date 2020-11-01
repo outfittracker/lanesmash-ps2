@@ -14,7 +14,6 @@ class HTTPRequest {
      * @returns {Promise<Object>}
      */
     static request(url){
-        console.log("Call "+url);
         return new Promise((resolve,reject) => {
             return Requestify.get(url).then(response => {
                 const stream = JSONStream();

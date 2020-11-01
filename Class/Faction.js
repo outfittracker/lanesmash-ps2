@@ -13,7 +13,7 @@ const Faction = {
             case Faction.NC: return 'NC';
             case Faction.VS: return 'VS';
             case Faction.TR: return 'TR';
-            default: return 'NT';
+            default: return 'NULL';
         }
     }
 }

@@ -7,6 +7,7 @@
 const FacilityState     = require("./FacilityState");
 const Faction           = require("./Faction");
 const Capture           = require("./Objects/Capture");
+const ScreenLog = require("./ScreenLog");
 
 /**
  *
@@ -32,6 +33,11 @@ class FacilityLane {
          * @type {{}}
          */
         this.startBases = {}
+        /**
+         *
+         * @type {number}
+         */
+        this.continent = 0;
     }
 
     /**
@@ -39,15 +45,19 @@ class FacilityLane {
      * @param {String[]} stack
      * @param connection
      * @param startBases
+     * @param {Number} continentId
      * @return {Promise}
      */
-    registerFacilityStack(connection,stack,startBases = {}){
-        console.log("LANE | Register new lane");
+    registerFacilityStack(connection,stack,startBases,continentId){
+        ScreenLog.log("LANE | Register new lane");
         this.connection         = connection;
+        this.continent          = continentId;
         this.facilitiesIds      = stack.map(s => parseInt(s));
         this.startBases         = startBases;
         this.factionList        = Object.keys(this.startBases).map(m => parseInt(m));
-        return this.setupData();
+        return this.setupData().then(() => {
+            this.printDebug();
+        });
     }
 
     /**
@@ -57,7 +67,7 @@ class FacilityLane {
     setupData(){
         this.facilities.length = 0;
         return Promise.all(this.facilitiesIds.map(facilityId => {
-            console.log("LANE | Adding "+facilityId+" to the lane");
+            ScreenLog.log("LANE | Adding "+facilityId+" to the lane");
             const fc = new FacilityState(facilityId,this.connection,this.factionList);
             this.facilities.push(fc);
             return fc.resolveCurrentState();
@@ -75,13 +85,16 @@ class FacilityLane {
 
     /**
      *
-     * @param {Capture} capture
+     * @param {Capture|BaseObject} capture
      * @return {boolean}
      */
     didSecure(capture){
+        if(capture.zoneId !== this.continent){
+            return false;
+        }
         const state = this.getStateForFacilityId(capture.facilityId);
-        if(state && this.isFactionValid(state.controllingFaction)){
-            console.log(state.name+" -"+Faction.name(capture.newFactionId)+") did capture");
+        if(state){
+            ScreenLog.log(state.name+" "+Faction.name(capture.newFactionId)+" did capture");
             return state.didSecure(capture.newFactionId,capture.type === Capture.Defense);
         }
         return false;
@@ -89,17 +102,28 @@ class FacilityLane {
 
     /**
      *
-     * @param {ExperienceGain} expGain
+     * @param {ExperienceGain|BaseObject} expGain
      * @return {boolean}
      */
     didContest(expGain){
+        if(expGain.zoneId !== this.continent){
+            return false;
+        }
         const faction = expGain.getFaction();
         if(faction !== null){
             const state = this.getContestableFacility(faction);
             if(state && this.isFactionValid(faction)){
-                console.log(state.name+" ("+Faction.name(faction)+") did contest");
+                ScreenLog.log(state.name+" ("+Faction.name(faction)+") did contest");
                 return state.didContest(faction);
             }
+            else{
+                ScreenLog.log("no contestable facility");
+                ScreenLog.log("state "+(state ? "yes" : "no"));
+            }
+        }
+        else{
+            ScreenLog.log("Null faction");
+            ScreenLog.log(expGain);
         }
 
         return false;
@@ -110,13 +134,26 @@ class FacilityLane {
      * @param {Number} faction
      * @return {null|FacilityState}
      */
+    getStartBase(faction){
+        const facilityId = this.startBases[String(faction)];
+        return this.getStateForFacilityId(facilityId);
+    }
+
+    /**
+     *
+     * @param {Number} faction
+     * @return {null|FacilityState}
+     */
     getContestableFacility(faction){
+        const laneDirection = this.facilities.indexOf(this.getStartBase(faction)) === 0 ? 1 : -1;
         for(let i=0;i<this.facilities.length;i++){
-            console.log(this.facilities[i].name +" ("+Faction.name(this.facilities[i].controllingFaction)+") check");
+            const index         = laneDirection === 1 ? i : this.facilities.length-1-i;
+            const facility      = this.facilities[index];
+            ScreenLog.log(facility.name +" ("+Faction.name(facility.controllingFaction)+") check");
             // La base suivante ou précédente doit apartenir à une autre faction (ou neutral), tous les points doivent être sécurisé
             // et la base sélectionnée doit composer des points capturables par la faction reçue
-            if(this.hasPointAvailableForCapture(this.facilities[i],faction)){
-                return this.facilities[i];
+            if(this.hasPointAvailableForCapture(facility,faction)){
+                return facility;
             }
         }
         return null; // Une team se fait rouler dessus ?
@@ -141,8 +178,8 @@ class FacilityLane {
 
         const gotPrevBase       = prevBase ? prevBase.isControllerBy(byFaction) : false;
         const gotNextBase       = nextBase ? nextBase.isControllerBy(byFaction) : false;
-        const nextIsSecured     = nextBase ? nextBase.isFullySecured() : true;
-        const prevIsSecured     = prevBase ? prevBase.isFullySecured() : true;
+        const nextIsSecured     = nextBase ? nextBase.areAllPointsSecured(byFaction) : true;
+        const prevIsSecured     = prevBase ? prevBase.areAllPointsSecured(byFaction) : true;
 
         const linkActive        = gotNextBase || gotPrevBase;
         const linkSecured       = nextIsSecured || prevIsSecured;
@@ -169,17 +206,20 @@ class FacilityLane {
         return this.setupData();
     }
 
+    /**
+     *
+     */
     printDebug(){
         const data = this.facilities.map(f => {
             const defTimer = f.defenseTimer;
             const atkTimer = f.attackTimer;
             const lt = {
-                "Base": f.name,
-                "Owner": Faction.name(f.controllingFaction),
-                "A Timer": atkTimer ? Faction.name(atkTimer) : false,
-                "D Timer": defTimer ? Faction.name(defTimer) : false,
-                "Contested": !f.isFullySecured(),
-                "Points": f.numberOfPoints,
+                "Base":         f.name,
+                "Owner":        Faction.name(f.controllingFaction),
+                "A Timer":      atkTimer ? Faction.name(atkTimer) : false,
+                "D Timer":      defTimer ? Faction.name(defTimer) : false,
+                "Secured":      f.areAllPointsSecured(f.controllingFaction),
+                "Points":       f.numberOfPoints,
             }
             this.factionList.forEach(fx => {
                 lt[Faction.name(fx)] = f.pointState[String(fx)];

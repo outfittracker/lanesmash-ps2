@@ -8,6 +8,7 @@ const SocketClient          = require('../Net/SocketClient');
 const schedule              = require('node-schedule');
 const ExperienceGain        = require("../Objects/ExperienceGain");
 const Capture               = require("../Objects/Capture");
+const ScreenLog = require("../ScreenLog");
 
 
 
@@ -35,7 +36,7 @@ class CensusSocket {
             }
 
             this.client = new SocketClient(() => {
-                console.log("Uplink websocket connected");
+                ScreenLog.log("Uplink websocket connected");
 
                 this.unsubscribeAll();
                 this.startListening().then(resolve);
@@ -66,7 +67,7 @@ class CensusSocket {
      * @return {*}
      */
     stop(){
-        console.log("Stopping SocketSubscriber");
+        ScreenLog.log("Stopping SocketSubscriber");
         this.unsubscribeAll();
         return this.client.close();
     }
@@ -117,7 +118,6 @@ class CensusSocket {
      *
      */
     unsubscribeAll(){
-        console.log("Unsubscribing everything ");
         this.client.send({
             "service":      "event",
             "action":       "unsubscribe",
@@ -136,11 +136,9 @@ class CensusSocket {
         const worldId = parseInt(process.env.WORLD_ID);
         this.eventCount++;
         if(payload && payload.event_name){
+
             switch(payload.event_name) {
                 case CensusSocket.EVENT_FACILITY_CONTROL:
-                    if(parseInt(payload.zone_id) > 1000){ // filter weird data received from socket
-                        return false;
-                    }
                     if(parseInt(payload.world_id) !== worldId){
                         return false;
                     }
@@ -152,6 +150,7 @@ class CensusSocket {
                     return this.dataCallback(new ExperienceGain(payload));
             }
         }
+        return false;
     }
 
 

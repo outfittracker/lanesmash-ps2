@@ -8,6 +8,7 @@ const ws      = require('websocket').server;
 const http    = require('http');
 const https   = require('https');
 const fs       = require('fs');
+const ScreenLog = require("../ScreenLog");
 
 
 class SocketServer {
@@ -32,7 +33,7 @@ class SocketServer {
             const certFile = process.env.CERTIFICATE_PATH;
 
             if(fs.existsSync(keyFile)){
-                console.info("Starting server in SECURE mode");
+                ScreenLog.log("Starting server in SECURE mode");
                 SocketServer.serverEndpoint = https.createServer({
                     key:    fs.readFileSync(keyFile),
                     cert:   fs.readFileSync(certFile)
@@ -41,14 +42,14 @@ class SocketServer {
                 });
             }
             else{
-                console.info("Starting server in INSECURE mode");
+                ScreenLog.log("Starting server in INSECURE mode");
                 SocketServer.serverEndpoint = http.createServer();
             }
 
 
         }
         catch(error) {
-            console.info("Failed to start server: "+error);
+            ScreenLog.log("Failed to start server: "+error);
             return false;
         }
 
@@ -56,9 +57,9 @@ class SocketServer {
 
         let port = SocketServer.getPort();
 
-        console.info("Starting port "+port);
+        ScreenLog.log("Starting port "+port);
         SocketServer.serverEndpoint.listen(port,() => {
-            console.info("Socket server port "+port+" open");
+            ScreenLog.log("Socket server port "+port+" open");
         });
 
         SocketServer.socketEndpoint  = new ws({httpServer: SocketServer.serverEndpoint});
@@ -79,20 +80,19 @@ class SocketServer {
                         if(messageCallback) return messageCallback(cn,pathx,json);
                     }
                     catch(err) {
-                        console.log(message.utf8Data);
-                        console.error(err);
+                        ScreenLog.log(message.utf8Data);
                         cn.send(JSON.stringify({error: err}));
                     }
                 }
             });
 
             cn.on('close',(con,closeReason,description) => {
-                console.info("Server connection close "+closeReason+" "+description);
+                ScreenLog.log("Server connection close "+closeReason+" "+description);
                 return closeCallback(cn,pathx);
             });
 
             cn.on('error',(err) => {
-                console.info("Server connection error "+err);
+                ScreenLog.log("Server connection error "+err);
                 return closeCallback(cn,pathx);
             });
         });

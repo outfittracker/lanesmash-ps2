@@ -11,6 +11,7 @@
 
 const WebSocketClient     = require('websocket').client;
 const schedule            = require('node-schedule');
+const ScreenLog = require("../ScreenLog");
 
 class SocketClient {
 
@@ -46,7 +47,7 @@ class SocketClient {
      */
     connect(){
 
-        console.log("Connecting WSClient to Rogue Planet server ...");
+        ScreenLog.log("Connecting WSClient to Rogue Planet server ...");
         this.startScheduler();
 
         if(this.client){
@@ -68,7 +69,7 @@ class SocketClient {
             this.ready = true;
             this.sendBuffer();
 
-            console.log("WS Socket connected");
+            ScreenLog.log("WS Socket connected");
 
             if(this.openCb) this.openCb(this.connector);
 
@@ -77,7 +78,7 @@ class SocketClient {
             });
 
             this.connector.on('close',(reasonCode,description) => {
-                console.log("Socket closed "+reasonCode+" "+description);
+                ScreenLog.log("Socket closed "+reasonCode+" "+description);
                 this.ready = false;
                 if(this.closeCb) this.closeCb();
                 setTimeout(() => {
@@ -86,7 +87,7 @@ class SocketClient {
             });
 
             this.connector.on('error',(error) => {
-                console.log("Socket client error "+error);
+                ScreenLog.log("Socket client error "+error);
                 this.ready = false;
                 this.reconnect();
                 if(this.closeCb) return this.closeCb();
@@ -96,19 +97,19 @@ class SocketClient {
         });
 
         const endpoint = this.getEndPoint();
-        console.log("Connecting to "+endpoint+"... ");
+        ScreenLog.log("Connecting to "+endpoint+"... ");
 
         return this.client.connect(endpoint,null,null,null,{});
     }
 
     close(){
-        console.log("Closing daybreak connection");
+        ScreenLog.log("Closing daybreak connection");
         return this.connector.close();
     }
 
     reconnect(){
         return setTimeout(() => {
-            console.log("Socked closed, reconnecting ...");
+            ScreenLog.log("Socked closed, reconnecting ...");
             this.connect();
         },2000);
     }

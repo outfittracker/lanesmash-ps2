@@ -77,16 +77,25 @@
 
         // peris amp, peris eastern,
 
-        const facilityStack = [3400,3430,5700];
+        /*
+        Heyoka (facility ID 206000).
+Heyoka Chemical Lab (facility ID 206002).
+Chimney Rock Depot (facility ID 222180).
+Tumas Skylance Battery (facility ID 211001).
+Tumas (facility ID 211000).
+         */
+
+        const facilityStack = [206000,206002,222180,211001,211000];
         const url = "ws://127.0.0.1:4568";
         const ws = new WebSocket(url+"/lanesmash");
         ws.onopen = () => {
             ws.send(JSON.stringify({
                 subscribe: {
                     facilities: facilityStack,
+                    continent: 6,
                     startBases: {
-                        1: 3400,
-                        2: 5700
+                        3: 206000,
+                        1: 211000
                     }
                 }
             }));

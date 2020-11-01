@@ -6,8 +6,10 @@
 
 'use strict';
 const LaneSmash = require("./Class/LaneSmash");
+const ScreenLog = require("./Class/ScreenLog");
 const dotenv = require('dotenv');
 dotenv.config();
+ScreenLog.init();
 
 const ls = new LaneSmash();
 
@@ -19,14 +21,14 @@ process.on('SIGINT',function(){
 });
 
 process.on('unhandledRejection', (reason, p) => {
-    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    ScreenLog.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
 
 try {
 
     ls.startServer().then(() => {
-        console.log("Server started");
+        ScreenLog.log("Server started");
     })
 } catch (err) {
-    console.log("Error:", err);
+    ScreenLog.log("Error:", err);
 }

@@ -48,11 +48,10 @@ class FacilityState {
                 this.pointState[String(this.controllingFaction)] = this.numberOfPoints;
             }
 
-           // console.log(this.name+" ("+Faction.name(this.controllingFaction)+") resolved");
+            ScreenLog.log(this.name+" ("+Faction.name(this.controllingFaction)+") resolved");
             this.sendUpdate(true);
         }).catch(err => {
-            ScreenLog.log("LANE | State resolve FAILED "+err);
-            console.error(err);
+            ScreenLog.log("State resolve FAILED "+err);
         });
     }
 
@@ -120,6 +119,8 @@ class FacilityState {
      */
     didContest(faction){
 
+        ScreenLog.log(this.name+" contested by "+Faction.name(faction));
+
         this.didTagPoint(faction);
         const stack = Object.keys(this.pointState).filter(
             k => parseInt(k) !== faction
@@ -136,10 +137,12 @@ class FacilityState {
         const factionTag = this.factionTimerProgress();
         if(factionTag){
             if(factionTag === this.controllingFaction){
+                ScreenLog.log("Defender timer running for "+Faction.name(factionTag)+" on "+this.name);
                 this.defenseTimer = factionTag;
                 this.attackTimer = null;
             }
             else{
+                ScreenLog.log("Attacker timer running for "+Faction.name(factionTag)+" on "+this.name);
                 this.defenseTimer = null;
                 this.attackTimer = factionTag;
             }
@@ -155,9 +158,8 @@ class FacilityState {
      * @param {Number} faction
      */
     didTagPoint(faction){
-
         this.pointState[String(faction)] = Math.min(this.pointState[faction]+1,this.numberOfPoints);
-        //console.log(this.name+" ("+Faction.name(faction)+") did tag a point "+this.pointState[String(faction)]+"/"+this.numberOfPoints);
+        ScreenLog.log(this.name+" ("+Faction.name(faction)+") did tag a point "+this.pointState[String(faction)]+"/"+this.numberOfPoints);
     }
 
     /**
@@ -193,6 +195,8 @@ class FacilityState {
      * @return {boolean}
      */
     didSecure(faction,isDefense = false){
+
+        ScreenLog.log(this.name+" "+(isDefense ? "defended" : "captured")+" by "+Faction.name(faction));
         this.controllingFaction = faction;
         if(faction !== null){
             this.pointState[String(faction)] = this.numberOfPoints;

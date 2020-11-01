@@ -49,13 +49,14 @@ class FacilityLane {
      * @return {Promise}
      */
     registerFacilityStack(connection,stack,startBases,continentId){
-        ScreenLog.log("LANE | Register new lane");
+        ScreenLog.log("Register new lane");
         this.connection         = connection;
         this.continent          = continentId;
         this.facilitiesIds      = stack.map(s => parseInt(s));
         this.startBases         = startBases;
         this.factionList        = Object.keys(this.startBases).map(m => parseInt(m));
         return this.setupData().then(() => {
+            ScreenLog.log("Lane setup done");
             this.printDebug();
         });
     }
@@ -67,8 +68,9 @@ class FacilityLane {
     setupData(){
         this.facilities.length = 0;
         return Promise.all(this.facilitiesIds.map(facilityId => {
-            ScreenLog.log("LANE | Adding "+facilityId+" to the lane");
             const fc = new FacilityState(facilityId,this.connection,this.factionList);
+            ScreenLog.log("Adding "+facilityId+" to the lane");
+
             this.facilities.push(fc);
             return fc.resolveCurrentState();
         }));
@@ -83,6 +85,7 @@ class FacilityLane {
         return faction === null || this.factionList.indexOf(faction) >= 0;
     }
 
+    /**
     /**
      *
      * @param {Capture|BaseObject} capture

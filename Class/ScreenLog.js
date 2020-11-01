@@ -53,7 +53,8 @@ class ScreenLog {
     }
 
     static log(string){
-        ScreenLog.text.insertBottom(string);
+        const dt = new Date();
+        ScreenLog.text.insertBottom(dt.getHours()+":"+dt.getMinutes()+":"+dt.getSeconds()+" "+string);
         ScreenLog.text.setScrollPerc(100);
         ScreenLog.screen.render();
     }

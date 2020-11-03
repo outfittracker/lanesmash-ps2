@@ -18,6 +18,7 @@ class ScreenLog {
             top: '0%',
             width: '100%',
             height: '50%',
+            tags: true,
             border: {
                 type: 'line'
             },
@@ -30,6 +31,7 @@ class ScreenLog {
         ScreenLog.text = blessed.textarea({
             top: '50%',
             width: '100%',
+            tags: true,
             height: '50%',
             border: {
                 type: 'line'

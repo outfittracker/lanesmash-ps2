@@ -1,12 +1,12 @@
 {
   "name": "lanescript",
   "version": "1.0.0",
-  "description": "",
+  "description": "Planetside 2 Lanesmash script",
   "main": "index.js",
   "scripts": {
     "test": "mocha --reporter list"
   },
-  "author": "",
+  "author": "Aurélien Munoz",
   "license": "ISC",
   "dependencies": {
     "blessed": "^0.1.81",

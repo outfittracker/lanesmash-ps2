@@ -20,6 +20,11 @@ Contact :
 If the terminal is stuck or not updating follow these instructions:
 https://serverfault.com/questions/204150/sometimes-powershell-stops-sending-output-until-i-press-enter-why
 
+### Troubleshoot
+
+- If the facility show the wrong faction, flip the base to another faction, and reflip
+- Works only for one lane (all other facilities must be secured or neutral)
+
 ## PlanetSide 2 Ids
 
 ### Worlds (Servers)

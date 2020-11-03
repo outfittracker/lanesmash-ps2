@@ -237,16 +237,16 @@ class FacilityLane {
             const defTimer = f.defenseTimer;
             const atkTimer = f.attackTimer;
             let lt = [
-               f.name,
-               Faction.name(f.controllingFaction),
-               atkTimer ? Faction.name(atkTimer) : "false",
-               defTimer ? Faction.name(defTimer) : "false",
-               f.areAllPointsSecured(f.controllingFaction) ? "true" : "false",
+               "{bold}"+f.name+"{/}",
+               "{"+Faction.color(f.controllingFaction)+"-bg}"+Faction.name(f.controllingFaction)+"{/}",
+               atkTimer ? "{"+Faction.color(atkTimer)+"-bg}"+Faction.name(atkTimer)+"{/}" : "{black-bg}No{/}",
+               defTimer ? "{"+Faction.color(defTimer)+"-bg}"+Faction.name(defTimer)+"{/}" : "{black-bg}No{/}",
+               f.areAllPointsSecured(f.controllingFaction) ? "{green-bg}Yes{/}" : "{black-bg}No{/}",
                String(f.numberOfPoints),
            ];
             this.factionList.forEach(fx => {
                 lt.push(String(f.pointState[String(fx)]));
-                lt.push(this.hasPointAvailableForCapture(f,fx) ? "true" : "false");
+                lt.push(this.hasPointAvailableForCapture(f,fx) ? "{green-bg}Yes{/}" : "{black-bg}No{/}");
             })
 
             data.push(lt);

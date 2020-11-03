@@ -15,6 +15,14 @@ const Faction = {
             case Faction.TR: return 'TR';
             default: return 'NULL';
         }
+    },
+    color: function (id){
+        switch(id){
+            case Faction.NC: return 'blue';
+            case Faction.VS: return 'magenta';
+            case Faction.TR: return 'red';
+            default: return 'black';
+        }
     }
 }
 

@@ -30,7 +30,7 @@ class ExperienceStack {
      */
     _didGroup(exp){
         if(
-            exp.timestamp-this.startDate < ExperienceStack.groupTimer &&
+            exp.timestamp === this.startDate &&
             this.faction === exp.getFaction() &&
             this.zoneId === exp.zoneId
         ){
@@ -47,7 +47,7 @@ class ExperienceStack {
      */
     _canFlush(){
         const dt = (new Date()).getTime()/1000-this.startDate;
-        return dt > ExperienceStack.groupTimer;
+        return dt > 2;
     }
 
     /**
@@ -96,5 +96,4 @@ ExperienceStack.stack = [];
  * @type {number}
  * @private
  */
-ExperienceStack.groupTimer = 5;
 module.exports = ExperienceStack;

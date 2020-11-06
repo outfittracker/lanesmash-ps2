@@ -210,7 +210,7 @@ class FacilityState {
     /**
      *
      * @param {Number|Null} faction
-     * @param isDefense
+     * @param {Boolean} isDefense
      * @return {boolean}
      */
     didSecure(faction,isDefense = false){

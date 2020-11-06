@@ -102,11 +102,19 @@ class SocketClient {
         return this.client.connect(endpoint,null,null,null,{});
     }
 
+    /**
+     *
+     * @return {*}
+     */
     close(){
         ScreenLog.log("Closing daybreak connection");
         return this.connector.close();
     }
 
+    /**
+     *
+     * @return {number}
+     */
     reconnect(){
         return setTimeout(() => {
             ScreenLog.log("Socked closed, reconnecting ...");

@@ -19,6 +19,7 @@ class ExperienceGain extends BaseObject {
         this.playerId       = payload.character_id;
         this.otherId        = payload.other_id;
         this.amount         = parseInt(payload.amount);
+        this.timestamp      = parseInt(payload.timestamp);
     }
 
     /**

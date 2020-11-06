@@ -105,30 +105,24 @@ class FacilityLane {
 
     /**
      *
-     * @param {ExperienceGain|BaseObject} expGain
+     * @param {ExperienceStack[]} expStacks
      * @return {boolean}
      */
-    didContest(expGain){
-        if(expGain.zoneId !== this.continent){
-            return false;
-        }
-        const faction = expGain.getFaction();
-        if(faction !== null){
-            const state = this.getContestableFacility(faction);
-            if(state && this.isFactionValid(faction)){
-                ScreenLog.log(state.name+" ("+Faction.name(faction)+") did contest");
-                return state.didContest(faction);
+    didContest(expStacks){
+        expStacks.forEach(stack => {
+            if(stack.zoneId !== this.continent || stack.faction === null){
+                return false;
+            }
+            const state = this.getContestableFacility(stack.faction);
+            if(state && this.isFactionValid(stack.faction)){
+                ScreenLog.log(state.name+" ("+Faction.name(stack.faction)+") did contest ("+stack.stack.length+" ticks)");
+                return state.didContest(stack.faction);
             }
             else{
                 ScreenLog.log("no contestable facility");
                 ScreenLog.log("state "+(state ? "yes" : "no"));
             }
-        }
-        else{
-            ScreenLog.log("Null faction");
-            ScreenLog.log(expGain);
-        }
-
+        });
         return false;
     }
 
@@ -213,13 +207,6 @@ class FacilityLane {
      *
      */
     printDebug(){
-        /*
-         table.setData([
-    [ 'Animals',  'Foods'  ],
-    [ 'Elephant', 'Apple'  ],
-    [ 'Bird',     'Orange' ]
-  ]);
-         */
 
         let header = [
             "Base","Owner","A Timer","D Timer","Secured","Points"
@@ -250,8 +237,7 @@ class FacilityLane {
             })
 
             data.push(lt);
-        })
-
+        });
         ScreenLog.update(data);
     }
 

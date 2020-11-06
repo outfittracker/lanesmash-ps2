@@ -10,6 +10,8 @@ const FacilityLane = require("./FacilityLane");
 const Capture = require("./Objects/Capture");
 const ExperienceGain = require("./Objects/ExperienceGain");
 const ScreenLog = require("./ScreenLog");
+const ExperienceStack = require("./Objects/ExperienceStack");
+const schedule = require("node-schedule")
 
 class LaneSmash {
 
@@ -30,6 +32,13 @@ class LaneSmash {
         return this.censusSocket.start(data => {
             this.didReceiveServerPayload(data);
         }).then(() => {
+
+            schedule.scheduleJob("* * * * * *",() => {
+                this.lane.didContest(ExperienceStack.getFlushQueue());
+                this.lane.printDebug();
+            });
+
+
             SocketServer.start((connection,endpoint,json) => {
                 if(endpoint === 'lanesmash'){
                     //console.log('Facility API message');
@@ -41,6 +50,8 @@ class LaneSmash {
                 }
             })
         })
+
+
     }
 
     stopServer(){
@@ -111,8 +122,9 @@ class LaneSmash {
             this.lane.didSecure(data);
         }
         else if(data instanceof ExperienceGain){
-            this.lane.didContest(data)
+            ExperienceStack.joinGroup(data);
         }
+
         this.lane.printDebug();
         return false;
     }

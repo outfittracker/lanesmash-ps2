@@ -111,17 +111,16 @@ class FacilityLane {
     didContest(expStacks){
         expStacks.forEach(stack => {
             if(stack.zoneId !== this.continent || stack.faction === null){
-                return false;
+                return false; // Wrong continent, null faction id oO ?
             }
             const state = this.getContestableFacility(stack.faction);
             if(state && this.isFactionValid(stack.faction)){
                 ScreenLog.log(state.name+" ("+Faction.name(stack.faction)+") did contest ("+stack.stack.length+" ticks)");
                 return state.didContest(stack.faction);
             }
-            else{
-                ScreenLog.log("no contestable facility");
-                ScreenLog.log("state "+(state ? "yes" : "no"));
-            }
+
+            ScreenLog.log("no contestable facility");
+            ScreenLog.log("state "+(state ? "yes" : "no"));
         });
         return false;
     }
@@ -164,8 +163,8 @@ class FacilityLane {
      */
     hasPointAvailableForCapture(facility,byFaction){
 
-        if(facility.controllingFaction === byFaction){
-            return facility.hasPointToCap(byFaction);
+        if(facility.isControllerBy(byFaction)){
+            return !facility.areAllPointsSecured(byFaction);
         }
 
         const isStartBase       = parseInt(this.startBases[String(byFaction)]) === facility.facilityId;
@@ -181,7 +180,7 @@ class FacilityLane {
         const linkActive        = gotNextBase || gotPrevBase;
         const linkSecured       = nextIsSecured || prevIsSecured;
 
-        return ((linkActive && linkSecured) || isStartBase) && facility.hasPointToCap(byFaction);
+        return ((linkActive && linkSecured) || isStartBase) && !facility.areAllPointsSecured(byFaction);
     }
 
     /**

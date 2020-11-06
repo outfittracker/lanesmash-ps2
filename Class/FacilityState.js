@@ -11,7 +11,7 @@ const ScreenLog = require("./ScreenLog");
 class FacilityState {
     /**
      *
-     * @param facilityId
+     * @param {Number} facilityId
      * @param connection
      * @param {Number[]}factionList
      */
@@ -29,7 +29,7 @@ class FacilityState {
         this.defenseTimer       = null;
 
         this.factionList.forEach(f => {
-            this.pointState[String(f)] = 0;
+            this.setControlledPoints(f,0)
         });
     }
 
@@ -43,13 +43,9 @@ class FacilityState {
             this.numberOfPoints                         = parseInt(payload.data.numberOfPoints);
             this.worldId                                = parseInt(payload.data.worldId);
             this.name                                   = payload.data.name;
-
-            if(this.controllingFaction > 0){
-                this.pointState[String(this.controllingFaction)] = this.numberOfPoints;
-            }
-
             ScreenLog.log(this.name+" ("+Faction.name(this.controllingFaction)+") resolved");
-            this.sendUpdate(true);
+            this.resetPoints(this.controllingFaction)
+            this._sendUpdate(true);
         }).catch(err => {
             ScreenLog.log("State resolve FAILED "+err);
         });
@@ -59,8 +55,9 @@ class FacilityState {
      *
      * @param init
      * @return {boolean}
+     * @private
      */
-    sendUpdate(init = false){
+    _sendUpdate(init = false){
         const factionTimer = this.factionTimerProgress();
         const payload = {
             type:                   'LaneFacilityState',
@@ -81,8 +78,9 @@ class FacilityState {
 
     /**
      *
-     * @param faction
+     * @param {Number|Null} faction
      * @return {boolean}
+     * @private
      */
     isFactionValid(faction){
         return faction === null || this.factionList.indexOf(faction) >= 0;
@@ -95,9 +93,9 @@ class FacilityState {
     factionTimerProgress(){
         if(!this.areAllPointsSecured(this.controllingFaction)){
 
-            const trPoint = this.isFactionValid(Faction.TR) ? this.pointState[String(Faction.TR)] : 0;
-            const ncPoint = this.isFactionValid(Faction.NC) ? this.pointState[String(Faction.NC)] : 0;
-            const vsPoint = this.isFactionValid(Faction.VS) ? this.pointState[String(Faction.VS)] : 0;
+            const trPoint = this.isFactionValid(Faction.TR) ? this.getControlledPoints(Faction.TR) : 0;
+            const ncPoint = this.isFactionValid(Faction.NC) ? this.getControlledPoints(Faction.NC) : 0;
+            const vsPoint = this.isFactionValid(Faction.VS) ? this.getControlledPoints(Faction.VS) : 0;
 
             if(trPoint > ncPoint && trPoint > vsPoint){
                 return Faction.TR;
@@ -110,6 +108,24 @@ class FacilityState {
             }
         }
         return null;
+    }
+
+    /**
+     *
+     * @param {Number|String} faction
+     * @return {Number}
+     */
+    getControlledPoints(faction){
+        return this.pointState[String(faction)];
+    }
+
+    /**
+     *
+     * @param {Number} faction
+     * @param {Number} pointCount
+     */
+    setControlledPoints(faction, pointCount){
+        this.pointState[String(faction)] = Math.min(Math.max(pointCount,0),this.numberOfPoints);
     }
 
     /**
@@ -128,15 +144,14 @@ class FacilityState {
 
         stack.forEach(opFaction => {
             const f = parseInt(opFaction);
-            const currentPoint = this.pointState[opFaction];
-            if(currentPoint > 0){
+            if(this.getControlledPoints(f) > 0){
                 this.didUntagPoint(f)
             }
         });
 
         const factionTag = this.factionTimerProgress();
         if(factionTag){
-            if(factionTag === this.controllingFaction){
+            if(this.isControllerBy(factionTag)){
                 ScreenLog.log("Defender timer running for "+Faction.name(factionTag)+" on "+this.name);
                 this.defenseTimer = factionTag;
                 this.attackTimer = null;
@@ -148,8 +163,7 @@ class FacilityState {
             }
         }
 
-
-        this.sendUpdate();
+        this._sendUpdate();
         return true;
     }
 
@@ -157,17 +171,32 @@ class FacilityState {
      *
      * @param {Number} faction
      */
-    didTagPoint(faction){
-        this.pointState[String(faction)] = Math.min(this.pointState[faction]+1,this.numberOfPoints);
-        ScreenLog.log(this.name+" ("+Faction.name(faction)+") did tag a point "+this.pointState[String(faction)]+"/"+this.numberOfPoints);
+    resetPoints(faction){
+        if(faction !== null){
+            this.setControlledPoints(faction,this.numberOfPoints);
+        }
+        this.factionList.filter(f => f !== faction).forEach(fc => {
+            this.setControlledPoints(fc,0);
+        });
     }
 
     /**
      *
      * @param {Number} faction
+     * @private
+     */
+    didTagPoint(faction){
+        this.setControlledPoints(faction,this.getControlledPoints(faction)+1);
+        ScreenLog.log(this.name+" ("+Faction.name(faction)+") flipped a point "+this.getControlledPoints(faction)+"/"+this.numberOfPoints);
+    }
+
+    /**
+     *
+     * @param {Number} faction
+     * @private
      */
     didUntagPoint(faction){
-        this.pointState[String(faction)] = Math.max(this.pointState[faction]-1,0);
+        this.setControlledPoints(faction,this.getControlledPoints(faction)-1)
     }
 
     /**
@@ -175,17 +204,7 @@ class FacilityState {
      * @return {boolean}
      */
     areAllPointsSecured(byFaction){
-        return this.pointState[String(byFaction)] === this.numberOfPoints;
-    }
-
-    /**
-     *
-     * @param {Number} faction
-     * @return {boolean}
-     */
-    hasPointToCap(faction){
-        //console.log(this.name+" ("+Faction.name(faction)+') got '+this.pointState[String(faction)]+"/"+this.numberOfPoints+" points");
-        return !this.areAllPointsSecured(faction);
+        return this.getControlledPoints(byFaction) === this.numberOfPoints;
     }
 
     /**
@@ -195,18 +214,12 @@ class FacilityState {
      * @return {boolean}
      */
     didSecure(faction,isDefense = false){
-
         ScreenLog.log(this.name+" "+(isDefense ? "defended" : "captured")+" by "+Faction.name(faction));
         this.controllingFaction = faction;
-        if(faction !== null){
-            this.pointState[String(faction)] = this.numberOfPoints;
-        }
-        this.factionList.filter(f => f !== faction).forEach(fc => {
-            this.pointState[String(fc)] = 0;
-        })
+        this.resetPoints(faction);
         this.attackTimer = null;
         this.defenseTimer = null;
-        return this.sendUpdate();
+        return this._sendUpdate();
     }
 
     /**

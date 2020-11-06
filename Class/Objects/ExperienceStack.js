@@ -6,10 +6,10 @@
 
 class ExperienceStack {
 
-
     /**
      *
      * @param {ExperienceGain|BaseObject} exp
+     * @private
      */
     constructor(exp) {
         /**
@@ -26,8 +26,9 @@ class ExperienceStack {
      *
      * @param {ExperienceGain|BaseObject} exp
      * @return {boolean}
+     * @private
      */
-    canGroup(exp){
+    _didGroup(exp){
         if(
             exp.timestamp-this.startDate < ExperienceStack.groupTimer &&
             this.faction === exp.getFaction() &&
@@ -42,9 +43,10 @@ class ExperienceStack {
     /**
      *
      * @return {boolean}
+     * @private
      */
-    canFlush(){
-        const dt = parseInt((new Date()).getTime()/1000)-this.startDate;
+    _canFlush(){
+        const dt = (new Date()).getTime()/1000-this.startDate;
         return dt > ExperienceStack.groupTimer;
     }
 
@@ -52,27 +54,27 @@ class ExperienceStack {
      *
      * @param {ExperienceGain} exp
      * @return {boolean}
+     * @public
      */
     static joinGroup(exp){
         for(let i=0;i<ExperienceStack.stack.length;i++){
-            const st = ExperienceStack.stack[i];
-            if(st.canGroup(exp)){
+            if(ExperienceStack.stack[i]._didGroup(exp)){
                 return true;
             }
         }
-        const gp = new ExperienceStack(exp);
-        ExperienceStack.stack.push(gp);
-        return false;
+        ExperienceStack.stack.push(new ExperienceStack(exp));
+        return true;
     }
 
     /**
      *
      * @return {ExperienceStack[]}
+     * @public
      */
     static getFlushQueue(){
         let toFlush = [];
         ExperienceStack.stack = ExperienceStack.stack.filter(group => {
-            if(group.canFlush()){
+            if(group._canFlush()){
                 toFlush.push(group);
                 return false;
             }
@@ -86,7 +88,13 @@ class ExperienceStack {
 /**
  *
  * @type {ExperienceStack[]}
+ * @private
  */
 ExperienceStack.stack = [];
+/**
+ *
+ * @type {number}
+ * @private
+ */
 ExperienceStack.groupTimer = 5;
 module.exports = ExperienceStack;

@@ -38,6 +38,12 @@ class FacilityLane {
          * @type {number}
          */
         this.continent = 0;
+
+        /**
+         *
+         * @type {Number[]}
+         */
+        this.factionList = [];
     }
 
     /**
